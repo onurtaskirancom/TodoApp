@@ -60,9 +60,9 @@ export default function App() {
             let iconName;
 
             if (route.name === 'Home') {
-              iconName = focused ? 'ios-list' : 'ios-list-outline';
+              iconName = focused ? 'list' : 'list-outline';
             } else if (route.name === 'Settings') {
-              iconName = focused ? 'ios-settings' : 'ios-settings-outline';
+              iconName = focused ? 'settings' : 'settings-outline';
             }
 
             return <Ionicons name={iconName} size={size} color={color} />;
