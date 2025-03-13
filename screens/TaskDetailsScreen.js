@@ -9,9 +9,11 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function TaskDetailsScreen({ route, navigation }) {
   const { task, index, onUpdate } = route.params;
+  const { theme } = useTheme();
   
   const [text, setText] = useState(task.text);
   const [completed, setCompleted] = useState(task.completed);
@@ -40,40 +42,80 @@ export default function TaskDetailsScreen({ route, navigation }) {
     navigation.goBack();
   };
   
+  // Dynamic styles based on theme
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: theme.background,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      color: theme.text,
+    },
+    input: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 4,
+      padding: 10,
+      fontSize: 16,
+      color: theme.text,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 4,
+      padding: 10,
+    },
+    statusText: {
+      fontSize: 16,
+      color: theme.text,
+    },
+  });
+  
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={dynamicStyles.container}>
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Task</Text>
+        <Text style={dynamicStyles.label}>Task</Text>
         <TextInput
-          style={styles.input}
+          style={dynamicStyles.input}
           value={text}
           onChangeText={setText}
           placeholder="Enter task"
+          placeholderTextColor={theme.secondaryText}
         />
       </View>
       
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Status</Text>
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>
+        <Text style={dynamicStyles.label}>Status</Text>
+        <View style={dynamicStyles.statusContainer}>
+          <Text style={dynamicStyles.statusText}>
             {completed ? 'Completed' : 'Active'}
           </Text>
           <Switch
             value={completed}
             onValueChange={setCompleted}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={completed ? '#2196F3' : '#f4f3f4'}
+            thumbColor={completed ? theme.primary : '#f4f3f4'}
           />
         </View>
       </View>
       
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Notes</Text>
+        <Text style={dynamicStyles.label}>Notes</Text>
         <TextInput
-          style={[styles.input, styles.notesInput]}
+          style={[dynamicStyles.input, styles.notesInput]}
           value={notes}
           onChangeText={setNotes}
           placeholder="Add notes (optional)"
+          placeholderTextColor={theme.secondaryText}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
@@ -89,7 +131,7 @@ export default function TaskDetailsScreen({ route, navigation }) {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.button, styles.saveButton]} 
+          style={[styles.button, { backgroundColor: theme.primary }]} 
           onPress={saveChanges}
         >
           <Text style={styles.buttonText}>Save</Text>
@@ -99,44 +141,13 @@ export default function TaskDetailsScreen({ route, navigation }) {
   );
 }
 
+// Static styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
   formGroup: {
     marginBottom: 20,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  input: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    padding: 10,
-    fontSize: 16,
-  },
   notesInput: {
     height: 100,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    padding: 10,
-  },
-  statusText: {
-    fontSize: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -152,10 +163,6 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#757575',
     marginRight: 10,
-  },
-  saveButton: {
-    backgroundColor: '#2196F3',
-    marginLeft: 10,
   },
   buttonText: {
     color: 'white',

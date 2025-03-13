@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  SafeAreaView, 
-  TextInput, 
-  TouchableOpacity, 
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  TextInput,
+  TouchableOpacity,
   FlatList,
-  Platform, 
+  Platform,
   StatusBar,
   Keyboard,
-  Alert
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTheme } from '../contexts/ThemeContext';
 
-const STORAGE_KEY = '@todo_items';
+const STORAGE_KEY = "@todo_items";
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
+  // Get theme
+  const { theme } = useTheme();
+  
   // State definitions
-  const [task, setTask] = useState('');
+  const [task, setTask] = useState("");
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,14 +30,19 @@ export default function HomeScreen({ navigation }) {
   const loadTasks = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log('Loaded data:', storedTasks);
+      console.log("Loaded data:", storedTasks);
       if (storedTasks !== null) {
         setTasks(JSON.parse(storedTasks));
-        console.log('Data loaded!');
+        console.log("Data loaded!");
+      } else {
+        // If no tasks found, set empty array
+        setTasks([]);
       }
     } catch (error) {
-      console.error('Loading error:', error);
-      Alert.alert('Error', 'An error occurred while loading tasks.');
+      console.error("Loading error:", error);
+      Alert.alert("Error", "An error occurred while loading tasks.");
+      // Set empty array on error
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -43,19 +52,19 @@ export default function HomeScreen({ navigation }) {
   const saveTasks = async (tasksToSave) => {
     try {
       const jsonValue = JSON.stringify(tasksToSave);
-      console.log('Saving:', jsonValue);
+      console.log("Saving:", jsonValue);
       await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
-      console.log('Saved!');
+      console.log("Saved!");
     } catch (error) {
-      console.error('Saving error:', error);
-      Alert.alert('Error', 'An error occurred while saving tasks.');
+      console.error("Saving error:", error);
+      Alert.alert("Error", "An error occurred while saving tasks.");
     }
   };
 
-  // Load tasks when app starts
+  // Load tasks when app starts or when refresh parameter changes
   useEffect(() => {
     loadTasks();
-  }, []);
+  }, [route.params?.refresh]);
 
   // Save tasks when they change
   useEffect(() => {
@@ -71,8 +80,16 @@ export default function HomeScreen({ navigation }) {
     }
 
     // Add new task
-    setTasks([...tasks, {text: task, completed: false}]);
-    setTask('');
+    setTasks([
+      ...tasks,
+      {
+        text: task,
+        completed: false,
+        category: "default", 
+        notes: "",
+      },
+    ]);
+    setTask("");
     Keyboard.dismiss();
   };
 
@@ -81,17 +98,21 @@ export default function HomeScreen({ navigation }) {
     const updatedTasks = [...tasks];
     updatedTasks[index].completed = !updatedTasks[index].completed;
     setTasks(updatedTasks);
-  }
-  
+  };
+
   // Delete task
   const handleDeleteTask = (index) => {
     const filteredTasks = tasks.filter((_, i) => i !== index);
     setTasks(filteredTasks);
-  }
+  };
 
   // View task details
   const viewTaskDetails = (item, index) => {
-    navigation.navigate('TaskDetails', { task: item, index, onUpdate: updateTask });
+    navigation.navigate("TaskDetails", {
+      task: item,
+      index,
+      onUpdate: updateTask,
+    });
   };
 
   // Update task from details screen
@@ -103,33 +124,37 @@ export default function HomeScreen({ navigation }) {
 
   // Render task item
   const renderItem = ({ item, index }) => (
-    <TouchableOpacity 
-      style={styles.taskContainer}
+    <TouchableOpacity
+      style={[styles.taskContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
       onPress={() => viewTaskDetails(item, index)}
     >
-      <TouchableOpacity 
-        style={styles.taskTextContainer} 
+      <TouchableOpacity
+        style={styles.taskTextContainer}
         onPress={(e) => {
           e.stopPropagation();
           toggleComplete(index);
         }}
       >
-        <View style={[
-          styles.checkbox, 
-          item.completed && styles.checkboxChecked
-        ]} />
-        <Text 
+        <View
+          style={[
+            styles.checkbox, 
+            { borderColor: theme.primary },
+            item.completed && { backgroundColor: theme.primary }
+          ]}
+        />
+        <Text
           style={[
             styles.taskText, 
-            item.completed && styles.taskTextCompleted
+            { color: theme.text },
+            item.completed && { textDecorationLine: 'line-through', color: theme.secondaryText }
           ]}
         >
           {item.text}
         </Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={styles.deleteButton} 
+
+      <TouchableOpacity
+        style={[styles.deleteButton, { backgroundColor: theme.danger }]}
         onPress={(e) => {
           e.stopPropagation();
           handleDeleteTask(index);
@@ -140,34 +165,54 @@ export default function HomeScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    input: {
+      backgroundColor: theme.card,
+      borderColor: theme.border,
+      color: theme.text,
+    },
+    addButton: {
+      backgroundColor: theme.primary,
+    },
+    emptyText: {
+      color: theme.secondaryText,
+    }
+  };
+
   // Show loading screen while data is being loaded
   if (loading) {
     return (
-      <View style={styles.content}>
-        <Text style={styles.emptyText}>Loading tasks...</Text>
+      <View style={[styles.content, { backgroundColor: theme.background }]}>
+        <Text style={[styles.emptyText, { color: theme.secondaryText }]}>Loading tasks...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
       <View style={styles.content}>
         {/* Task input form */}
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, dynamicStyles.input]}
             placeholder="Add a new task..."
+            placeholderTextColor={theme.secondaryText}
             value={task}
             onChangeText={setTask}
           />
           <TouchableOpacity 
-            style={styles.addButton} 
+            style={[styles.addButton, dynamicStyles.addButton]} 
             onPress={handleAddTask}
           >
             <Text style={styles.addButtonText}>Add</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Task list */}
         {tasks.length > 0 ? (
           <FlatList
@@ -177,63 +222,60 @@ export default function HomeScreen({ navigation }) {
             style={styles.list}
           />
         ) : (
-          <Text style={styles.emptyText}>No tasks added yet.</Text>
+          <Text style={[styles.emptyText, dynamicStyles.emptyText]}>No tasks added yet.</Text>
         )}
       </View>
     </SafeAreaView>
   );
 }
 
+// Static styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   content: {
     flex: 1,
     padding: 20,
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 20,
   },
   input: {
     flex: 1,
     height: 50,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 4,
     padding: 10,
-    backgroundColor: 'white',
   },
   addButton: {
-    backgroundColor: '#2196F3',
     height: 50,
     paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 4,
     marginLeft: 10,
   },
   addButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   list: {
     flex: 1,
   },
   taskContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
+    flexDirection: "row",
     padding: 15,
     borderRadius: 4,
     marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
   },
   taskTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   checkbox: {
@@ -241,33 +283,23 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#2196F3',
     marginRight: 10,
-  },
-  checkboxChecked: {
-    backgroundColor: '#2196F3',
   },
   taskText: {
     fontSize: 16,
   },
-  taskTextCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#757575',
-  },
   deleteButton: {
-    backgroundColor: '#F44336',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 4,
   },
   deleteButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   emptyText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
-    color: '#757575',
     fontSize: 16,
-  }
-}); 
+  },
+});

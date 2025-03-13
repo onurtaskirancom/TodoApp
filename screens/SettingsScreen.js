@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -9,10 +9,13 @@ import {
   ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../contexts/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function SettingsScreen() {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, darkMode, toggleTheme } = useTheme();
   const [notifications, setNotifications] = useState(false);
+  const navigation = useNavigation();
   
   // Clear all tasks
   const clearAllTasks = async () => {
@@ -31,6 +34,9 @@ export default function SettingsScreen() {
             try {
               await AsyncStorage.removeItem('@todo_items');
               Alert.alert('Success', 'All tasks have been cleared.');
+              
+              // Force HomeScreen to reload data
+              navigation.navigate('Home', { refresh: Date.now() });
             } catch (error) {
               Alert.alert('Error', 'Failed to clear tasks.');
             }
@@ -40,86 +46,128 @@ export default function SettingsScreen() {
     );
   };
   
+  // Dynamic styles based on theme
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    section: {
+      backgroundColor: theme.card,
+      marginVertical: 10,
+      padding: 15,
+      borderRadius: 8,
+      marginHorizontal: 15,
+      borderColor: theme.border,
+      borderWidth: 1,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 15,
+      color: theme.text,
+    },
+    settingItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+    },
+    settingLabel: {
+      fontSize: 16,
+      color: theme.text,
+    },
+    dangerButton: {
+      backgroundColor: '#F44336',
+      padding: 15,
+      borderRadius: 4,
+      alignItems: 'center',
+    },
+    dangerButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    aboutItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#eee',
+    },
+    aboutLabel: {
+      fontSize: 16,
+      color: theme.text,
+    },
+    aboutValue: {
+      fontSize: 16,
+      color: theme.secondaryText,
+    },
+    statusText: {
+      color: theme.text,
+    }
+  });
+  
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Appearance</Text>
-        <View style={styles.settingItem}>
-          <Text style={styles.settingLabel}>Dark Mode</Text>
+    <ScrollView style={dynamicStyles.container}>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Appearance</Text>
+        <View style={dynamicStyles.settingItem}>
+          <Text style={dynamicStyles.settingLabel}>Dark Mode</Text>
           <Switch
             value={darkMode}
-            onValueChange={setDarkMode}
+            onValueChange={toggleTheme}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={darkMode ? '#2196F3' : '#f4f3f4'}
+            thumbColor={darkMode ? theme.primary : '#f4f3f4'}
           />
         </View>
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <View style={styles.settingItem}>
-          <Text style={styles.settingLabel}>Enable Notifications</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Notifications</Text>
+        <View style={dynamicStyles.settingItem}>
+          <Text style={dynamicStyles.settingLabel}>Enable Notifications</Text>
           <Switch
             value={notifications}
             onValueChange={setNotifications}
             trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={notifications ? '#2196F3' : '#f4f3f4'}
+            thumbColor={notifications ? theme.primary : '#f4f3f4'}
           />
         </View>
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Data</Text>
         <TouchableOpacity 
-          style={styles.dangerButton}
+          style={dynamicStyles.dangerButton}
           onPress={clearAllTasks}
         >
-          <Text style={styles.dangerButtonText}>Clear All Tasks</Text>
+          <Text style={dynamicStyles.dangerButtonText}>Clear All Tasks</Text>
         </TouchableOpacity>
       </View>
       
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.aboutItem}>
-          <Text style={styles.aboutLabel}>Version</Text>
-          <Text style={styles.aboutValue}>1.0.0</Text>
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>About</Text>
+        <View style={dynamicStyles.aboutItem}>
+          <Text style={dynamicStyles.aboutLabel}>Version</Text>
+          <Text style={dynamicStyles.aboutValue}>1.0.0</Text>
         </View>
-        <View style={styles.aboutItem}>
-          <Text style={styles.aboutLabel}>Developer</Text>
-          <Text style={styles.aboutValue}>Your Name</Text>
+        <View style={dynamicStyles.aboutItem}>
+          <Text style={dynamicStyles.aboutLabel}>Developer</Text>
+          <Text style={dynamicStyles.aboutValue}>Your Name</Text>
         </View>
       </View>
     </ScrollView>
   );
 }
 
+// Static styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  section: {
-    backgroundColor: 'white',
-    marginVertical: 10,
-    padding: 15,
-    borderRadius: 8,
-    marginHorizontal: 15,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-  },
-  settingLabel: {
-    fontSize: 16,
-    color: '#444',
   },
   dangerButton: {
     backgroundColor: '#F44336',
@@ -138,13 +186,5 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  },
-  aboutLabel: {
-    fontSize: 16,
-    color: '#444',
-  },
-  aboutValue: {
-    fontSize: 16,
-    color: '#777',
   },
 }); 
