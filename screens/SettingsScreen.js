@@ -9,16 +9,17 @@ import {
   ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, useAppContext } from '../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
 export default function SettingsScreen() {
   const { theme, darkMode, toggleTheme } = useTheme();
+  const { clearAllTasks } = useAppContext();
   const [notifications, setNotifications] = useState(false);
   const navigation = useNavigation();
   
   // Clear all tasks
-  const clearAllTasks = async () => {
+  const handleClearAllTasks = async () => {
     Alert.alert(
       'Clear All Tasks',
       'Are you sure you want to delete all tasks? This action cannot be undone.',
@@ -31,13 +32,12 @@ export default function SettingsScreen() {
           text: 'Clear All',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('@todo_items');
+            const success = await clearAllTasks();
+            if (success) {
               Alert.alert('Success', 'All tasks have been cleared.');
-              
               // Force HomeScreen to reload data
               navigation.navigate('Home', { refresh: Date.now() });
-            } catch (error) {
+            } else {
               Alert.alert('Error', 'Failed to clear tasks.');
             }
           },
@@ -140,7 +140,7 @@ export default function SettingsScreen() {
         <Text style={dynamicStyles.sectionTitle}>Data</Text>
         <TouchableOpacity 
           style={dynamicStyles.dangerButton}
-          onPress={clearAllTasks}
+          onPress={handleClearAllTasks}
         >
           <Text style={dynamicStyles.dangerButtonText}>Clear All Tasks</Text>
         </TouchableOpacity>

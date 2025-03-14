@@ -13,13 +13,14 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, useAppContext } from '../contexts/ThemeContext';
 
 const STORAGE_KEY = "@todo_items";
 
 export default function HomeScreen({ navigation, route }) {
-  // Get theme
+  // Get theme and app context
   const { theme } = useTheme();
+  const { tasksCleared } = useAppContext();
   
   // State definitions
   const [task, setTask] = useState("");
@@ -65,6 +66,14 @@ export default function HomeScreen({ navigation, route }) {
   useEffect(() => {
     loadTasks();
   }, [route.params?.refresh]);
+
+  // Listen for tasks cleared event
+  useEffect(() => {
+    if (tasksCleared) {
+      setTasks([]);
+      console.log("Tasks cleared from context event");
+    }
+  }, [tasksCleared]);
 
   // Save tasks when they change
   useEffect(() => {

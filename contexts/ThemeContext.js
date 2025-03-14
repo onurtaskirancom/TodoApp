@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Tema renkleri
+// Theme colors
 const themes = {
   light: {
     background: '#f5f5f5',
@@ -27,15 +27,19 @@ const themes = {
   },
 };
 
-// Tema bağlamı oluşturma
+// Create theme context
 const ThemeContext = createContext();
 
-// Tema sağlayıcı bileşeni
+// Context for application-wide event management
+export const AppContext = createContext();
+
+// Theme provider component
 export const ThemeProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [theme, setTheme] = useState(themes.light);
+  const [tasksCleared, setTasksCleared] = useState(false);
 
-  // Tema tercihini AsyncStorage'dan yükleme
+  // Load theme preference from AsyncStorage
   useEffect(() => {
     const loadThemePreference = async () => {
       try {
@@ -53,13 +57,13 @@ export const ThemeProvider = ({ children }) => {
     loadThemePreference();
   }, []);
 
-  // Tema değiştirme fonksiyonu
+  // Theme toggle function
   const toggleTheme = async () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     setTheme(newDarkMode ? themes.dark : themes.light);
     
-    // Tema tercihini AsyncStorage'a kaydetme
+    // Save theme preference to AsyncStorage
     try {
       await AsyncStorage.setItem('@theme_preference', JSON.stringify(newDarkMode));
     } catch (error) {
@@ -67,12 +71,31 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  // Function that triggers the clear all tasks event
+  const clearAllTasks = async () => {
+    try {
+      await AsyncStorage.removeItem('@todo_items');
+      setTasksCleared(true);
+      // Reset the event (to be ready for the next clearing)
+      setTimeout(() => setTasksCleared(false), 100);
+      return true;
+    } catch (error) {
+      console.error('Error clearing tasks:', error);
+      return false;
+    }
+  };
+
   return (
     <ThemeContext.Provider value={{ theme, darkMode, toggleTheme }}>
-      {children}
+      <AppContext.Provider value={{ tasksCleared, clearAllTasks }}>
+        {children}
+      </AppContext.Provider>
     </ThemeContext.Provider>
   );
 };
 
-// Tema hook'u
-export const useTheme = () => useContext(ThemeContext); 
+// Theme hook
+export const useTheme = () => useContext(ThemeContext);
+
+// App context hook
+export const useAppContext = () => useContext(AppContext); 
