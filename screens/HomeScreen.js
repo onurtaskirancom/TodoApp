@@ -12,10 +12,7 @@ import {
   Keyboard,
   Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme, useAppContext } from '../contexts/ThemeContext';
-
-const STORAGE_KEY = "@todo_items";
 
 export default function HomeScreen({ navigation, route }) {
   // Get theme and app context
@@ -25,52 +22,10 @@ export default function HomeScreen({ navigation, route }) {
   // State definitions
   const [taskText, setTaskText] = useState("");
 
-  // Load tasks from AsyncStorage
-  const loadTasks = async () => {
-    try {
-      const storedTasks = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log("Loaded data:", storedTasks);
-      if (storedTasks !== null) {
-        // If tasks found, parse and set them
-        setTasks(JSON.parse(storedTasks));
-        console.log("Data loaded!");
-      } else {
-        // If no tasks found, set empty array
-        setTasks([]);
-      }
-    } catch (error) {
-      console.error("Loading error:", error);
-      Alert.alert("Error", "An error occurred while loading tasks.");
-      // Set empty array on error
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Save tasks to AsyncStorage
-  const saveTasks = async (tasksToSave) => {
-    try {
-      const jsonValue = JSON.stringify(tasksToSave);
-      console.log("Saving:", jsonValue);
-      await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
-      console.log("Saved!");
-    } catch (error) {
-      console.error("Saving error:", error);
-      Alert.alert("Error", "An error occurred while saving tasks.");
-    }
-  };
-
-  // Load tasks when app starts or when refresh parameter changes
-  useEffect(() => {
-    loadTasks();
-  }, [route.params?.refresh]);
-
   // View task details
-  const viewTaskDetails = (task, index) => {
+  const viewTaskDetails = (task) => {
     navigation.navigate("TaskDetails", {
       task,
-      index,
     });
   };
 
@@ -103,7 +58,7 @@ export default function HomeScreen({ navigation, route }) {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.taskContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
-      onPress={() => viewTaskDetails(item, item.id)}
+      onPress={() => viewTaskDetails(item)}
     >
       <TouchableOpacity
         style={styles.taskTextContainer}
@@ -195,7 +150,7 @@ export default function HomeScreen({ navigation, route }) {
           <FlatList
             data={tasks}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
             style={styles.list}
           />
         ) : (
@@ -216,67 +171,68 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   inputContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: 20,
   },
   input: {
     flex: 1,
-    height: 50,
+    height: 48,
     borderWidth: 1,
     borderRadius: 4,
-    padding: 10,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    fontSize: 16,
   },
   addButton: {
-    height: 50,
-    paddingHorizontal: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 80,
+    height: 48,
     borderRadius: 4,
-    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   list: {
     flex: 1,
   },
   taskContainer: {
-    flexDirection: "row",
-    padding: 15,
-    borderRadius: 4,
-    marginBottom: 10,
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
     borderWidth: 1,
   },
   taskTextContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
-    marginRight: 10,
+    marginRight: 12,
   },
   taskText: {
     fontSize: 16,
   },
   deleteButton: {
-    paddingVertical: 6,
     paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 4,
   },
   deleteButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
   },
   emptyText: {
-    textAlign: "center",
-    marginTop: 20,
+    textAlign: 'center',
+    marginTop: 50,
     fontSize: 16,
   },
 });

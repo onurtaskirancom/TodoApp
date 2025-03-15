@@ -144,12 +144,12 @@ export default function TaskDetailsScreen({ route, navigation }) {
         <Text style={dynamicStyles.label}>Category</Text>
         <View style={dynamicStyles.pickerContainer}>
           <Picker
-            selectedValue={categoryId}
-            onValueChange={(itemValue) => setCategoryId(itemValue)}
+            selectedValue={categoryId || ""}
+            onValueChange={(itemValue) => setCategoryId(itemValue === "" ? null : itemValue)}
             style={dynamicStyles.picker}
             dropdownIconColor={theme.text}
           >
-            <Picker.Item label="No Category" value={null} />
+            <Picker.Item label="No Category" value="" />
             {categories.map(category => (
               <Picker.Item 
                 key={category.id} 

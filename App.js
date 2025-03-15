@@ -94,9 +94,9 @@ function TabNavigator() {
             let iconName;
 
             if (route.name === 'Home') {
-              iconName = focused ? 'list' : 'list-outline';
+              iconName = focused ? 'list' : 'list';
             } else if (route.name === 'Settings') {
-              iconName = focused ? 'settings' : 'settings-outline';
+              iconName = focused ? 'settings' : 'settings';
             }
 
             return <MaterialIcons name={iconName} size={size} color={color} />;
