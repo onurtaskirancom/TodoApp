@@ -9,15 +9,18 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, useAppContext } from '../contexts/ThemeContext';
+import { Picker } from '@react-native-picker/picker';
 
 export default function TaskDetailsScreen({ route, navigation }) {
-  const { task, index, onUpdate } = route.params;
+  const { task } = route.params;
   const { theme } = useTheme();
+  const { updateTask, categories } = useAppContext();
   
   const [text, setText] = useState(task.text);
   const [completed, setCompleted] = useState(task.completed);
   const [notes, setNotes] = useState(task.notes || '');
+  const [categoryId, setCategoryId] = useState(task.categoryId || null);
   
   // Save changes and go back
   const saveChanges = () => {
@@ -30,16 +33,24 @@ export default function TaskDetailsScreen({ route, navigation }) {
       ...task,
       text,
       completed,
-      notes
+      notes,
+      categoryId
     };
     
-    onUpdate(index, updatedTask);
+    updateTask(task.id, updatedTask);
     navigation.goBack();
   };
   
   // Discard changes and go back
   const cancelChanges = () => {
     navigation.goBack();
+  };
+
+  // Get category color
+  const getCategoryColor = () => {
+    if (!categoryId) return '#CCCCCC';
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.color : '#CCCCCC';
   };
   
   // Dynamic styles based on theme
@@ -78,6 +89,27 @@ export default function TaskDetailsScreen({ route, navigation }) {
       fontSize: 16,
       color: theme.text,
     },
+    pickerContainer: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 4,
+      marginBottom: 10,
+    },
+    picker: {
+      color: theme.text,
+    },
+    categoryIndicator: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      marginRight: 10,
+      backgroundColor: getCategoryColor(),
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
   });
   
   return (
@@ -106,6 +138,36 @@ export default function TaskDetailsScreen({ route, navigation }) {
             thumbColor={completed ? theme.primary : '#f4f3f4'}
           />
         </View>
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={dynamicStyles.label}>Category</Text>
+        <View style={dynamicStyles.pickerContainer}>
+          <Picker
+            selectedValue={categoryId}
+            onValueChange={(itemValue) => setCategoryId(itemValue)}
+            style={dynamicStyles.picker}
+            dropdownIconColor={theme.text}
+          >
+            <Picker.Item label="No Category" value={null} />
+            {categories.map(category => (
+              <Picker.Item 
+                key={category.id} 
+                label={category.name} 
+                value={category.id} 
+                color={category.color}
+              />
+            ))}
+          </Picker>
+        </View>
+        {categoryId && (
+          <View style={dynamicStyles.categoryRow}>
+            <View style={dynamicStyles.categoryIndicator} />
+            <Text style={{ color: theme.text }}>
+              {categories.find(c => c.id === categoryId)?.name || 'Unknown Category'}
+            </Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.formGroup}>

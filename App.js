@@ -1,68 +1,92 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StatusBar } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
-// Import screens
-import HomeScreen from './screens/HomeScreen';
-import TaskDetailsScreen from './screens/TaskDetailsScreen';
-import SettingsScreen from './screens/SettingsScreen';
-
-// Import theme provider
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import HomeScreen from './screens/HomeScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import TaskDetailsScreen from './screens/TaskDetailsScreen';
+import CategoryScreen from './screens/CategoryScreen';
+import { MaterialIcons } from '@expo/vector-icons';
+import { StatusBar } from 'react-native';
 
-// Create navigators
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Home stack with task details
 function HomeStack() {
   const { theme } = useTheme();
-  
+
   return (
-    <Stack.Navigator>
-      <Stack.Screen 
-        name="Tasks" 
-        component={HomeScreen} 
-        options={{ 
-          headerStyle: {
-            backgroundColor: theme.primary,
-          },
-          headerTintColor: 'white',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.card,
+        },
+        headerTintColor: theme.text,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen
+        name="TaskList"
+        component={HomeScreen}
+        options={{
+          title: 'Tasks',
         }}
       />
-      <Stack.Screen 
-        name="TaskDetails" 
-        component={TaskDetailsScreen} 
-        options={{ 
+      <Stack.Screen
+        name="TaskDetails"
+        component={TaskDetailsScreen}
+        options={{
           title: 'Task Details',
-          headerStyle: {
-            backgroundColor: theme.primary,
-          },
-          headerTintColor: 'white',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
         }}
       />
     </Stack.Navigator>
   );
 }
 
-// Main app component with tab navigation
-function MainApp() {
-  const { theme, darkMode } = useTheme();
-  
+function SettingsStack() {
+  const { theme } = useTheme();
+
   return (
-    <NavigationContainer>
-      <StatusBar 
-        barStyle={darkMode ? "light-content" : "dark-content"} 
-        backgroundColor={darkMode ? "#000000" : "#ffffff"} 
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.card,
+        },
+        headerTintColor: theme.text,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen
+        name="SettingsScreen"
+        component={SettingsScreen}
+        options={{
+          title: 'Settings',
+        }}
+      />
+      <Stack.Screen
+        name="Categories"
+        component={CategoryScreen}
+        options={{
+          title: 'Categories',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function TabNavigator() {
+  const { theme, darkMode } = useTheme();
+
+  return (
+    <>
+      <StatusBar
+        barStyle={darkMode ? "light-content" : "dark-content"}
+        backgroundColor={darkMode ? theme.background : theme.background}
       />
       <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -75,29 +99,30 @@ function MainApp() {
               iconName = focused ? 'settings' : 'settings-outline';
             }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <MaterialIcons name={iconName} size={size} color={color} />;
           },
           tabBarActiveTintColor: theme.primary,
           tabBarInactiveTintColor: theme.secondaryText,
-          headerShown: false,
           tabBarStyle: {
             backgroundColor: theme.card,
             borderTopColor: theme.border,
           },
+          headerShown: false,
         })}
       >
         <Tab.Screen name="Home" component={HomeStack} />
-        <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+        <Tab.Screen name="Settings" component={SettingsStack} />
       </Tab.Navigator>
-    </NavigationContainer>
+    </>
   );
 }
 
-// Wrap the app with ThemeProvider
 export default function App() {
   return (
     <ThemeProvider>
-      <MainApp />
+      <NavigationContainer>
+        <TabNavigator />
+      </NavigationContainer>
     </ThemeProvider>
   );
 }

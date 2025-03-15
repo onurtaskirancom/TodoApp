@@ -11,12 +11,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, useAppContext } from '../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   const { theme, darkMode, toggleTheme } = useTheme();
   const { clearAllTasks } = useAppContext();
   const [notifications, setNotifications] = useState(false);
-  const navigation = useNavigation();
   
   // Clear all tasks
   const handleClearAllTasks = async () => {
@@ -29,16 +29,14 @@ export default function SettingsScreen() {
           style: 'cancel',
         },
         {
-          text: 'Clear All',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             const success = await clearAllTasks();
             if (success) {
-              Alert.alert('Success', 'All tasks have been cleared.');
-              // Force HomeScreen to reload data
-              navigation.navigate('Home', { refresh: Date.now() });
+              Alert.alert('Success', 'All tasks have been cleared!');
             } else {
-              Alert.alert('Error', 'Failed to clear tasks.');
+              Alert.alert('Error', 'Failed to clear tasks!');
             }
           },
         },
@@ -112,15 +110,22 @@ export default function SettingsScreen() {
     <ScrollView style={dynamicStyles.container}>
       <View style={dynamicStyles.section}>
         <Text style={dynamicStyles.sectionTitle}>Appearance</Text>
-        <View style={dynamicStyles.settingItem}>
-          <Text style={dynamicStyles.settingLabel}>Dark Mode</Text>
-          <Switch
-            value={darkMode}
-            onValueChange={toggleTheme}
-            trackColor={{ false: '#767577', true: '#81b0ff' }}
-            thumbColor={darkMode ? theme.primary : '#f4f3f4'}
-          />
-        </View>
+        <TouchableOpacity
+          style={[dynamicStyles.settingItem, { backgroundColor: theme.card }]}
+          onPress={toggleTheme}
+        >
+          <View style={dynamicStyles.settingContent}>
+            <MaterialIcons
+              name={darkMode ? 'dark-mode' : 'light-mode'}
+              size={24}
+              color={theme.text}
+            />
+            <Text style={[dynamicStyles.settingText, { color: theme.text }]}>
+              {darkMode ? 'Light Theme' : 'Dark Theme'}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={theme.text} />
+        </TouchableOpacity>
       </View>
       
       <View style={dynamicStyles.section}>
@@ -138,11 +143,16 @@ export default function SettingsScreen() {
       
       <View style={dynamicStyles.section}>
         <Text style={dynamicStyles.sectionTitle}>Data</Text>
-        <TouchableOpacity 
-          style={dynamicStyles.dangerButton}
+        <TouchableOpacity
+          style={[dynamicStyles.settingItem, { backgroundColor: theme.danger }]}
           onPress={handleClearAllTasks}
         >
-          <Text style={dynamicStyles.dangerButtonText}>Clear All Tasks</Text>
+          <View style={dynamicStyles.settingContent}>
+            <MaterialIcons name="delete-forever" size={24} color="white" />
+            <Text style={[dynamicStyles.settingText, { color: 'white' }]}>
+              Clear All Tasks
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
       
@@ -156,6 +166,22 @@ export default function SettingsScreen() {
           <Text style={dynamicStyles.aboutLabel}>Developer</Text>
           <Text style={dynamicStyles.aboutValue}>Your Name</Text>
         </View>
+      </View>
+
+      <View style={dynamicStyles.section}>
+        <Text style={dynamicStyles.sectionTitle}>Categories</Text>
+        <TouchableOpacity
+          style={[dynamicStyles.settingItem, { backgroundColor: theme.card }]}
+          onPress={() => navigation.navigate('Categories')}
+        >
+          <View style={dynamicStyles.settingContent}>
+            <MaterialIcons name="category" size={24} color={theme.text} />
+            <Text style={[dynamicStyles.settingText, { color: theme.text }]}>
+              Manage Categories
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={theme.text} />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -186,5 +212,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  settingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingText: {
+    fontSize: 16,
+    marginLeft: 16,
   },
 }); 

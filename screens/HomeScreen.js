@@ -20,12 +20,10 @@ const STORAGE_KEY = "@todo_items";
 export default function HomeScreen({ navigation, route }) {
   // Get theme and app context
   const { theme } = useTheme();
-  const { tasksCleared } = useAppContext();
+  const { tasks, loading, addTask, updateTask, deleteTask } = useAppContext();
   
   // State definitions
-  const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [taskText, setTaskText] = useState("");
 
   // Load tasks from AsyncStorage
   const loadTasks = async () => {
@@ -33,6 +31,7 @@ export default function HomeScreen({ navigation, route }) {
       const storedTasks = await AsyncStorage.getItem(STORAGE_KEY);
       console.log("Loaded data:", storedTasks);
       if (storedTasks !== null) {
+        // If tasks found, parse and set them
         setTasks(JSON.parse(storedTasks));
         console.log("Data loaded!");
       } else {
@@ -67,81 +66,50 @@ export default function HomeScreen({ navigation, route }) {
     loadTasks();
   }, [route.params?.refresh]);
 
-  // Listen for tasks cleared event
-  useEffect(() => {
-    if (tasksCleared) {
-      setTasks([]);
-      console.log("Tasks cleared from context event");
-    }
-  }, [tasksCleared]);
+  // View task details
+  const viewTaskDetails = (task, index) => {
+    navigation.navigate("TaskDetails", {
+      task,
+      index,
+    });
+  };
 
-  // Save tasks when they change
-  useEffect(() => {
-    if (!loading) {
-      saveTasks(tasks);
+  // Toggle task completion status
+  const toggleComplete = (taskId) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      updateTask(taskId, { completed: !task.completed });
     }
-  }, [tasks, loading]);
+  };
 
   // Add new task
   const handleAddTask = () => {
-    if (task.trim().length === 0) {
+    if (taskText.trim().length === 0) {
       return;
     }
 
     // Add new task
-    setTasks([
-      ...tasks,
-      {
-        text: task,
-        completed: false,
-        category: "default", 
-        notes: "",
-      },
-    ]);
-    setTask("");
+    addTask({
+      text: taskText,
+      categoryId: null,
+      notes: "",
+    });
+    
+    setTaskText("");
     Keyboard.dismiss();
   };
 
-  // Toggle task completion status
-  const toggleComplete = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index].completed = !updatedTasks[index].completed;
-    setTasks(updatedTasks);
-  };
-
-  // Delete task
-  const handleDeleteTask = (index) => {
-    const filteredTasks = tasks.filter((_, i) => i !== index);
-    setTasks(filteredTasks);
-  };
-
-  // View task details
-  const viewTaskDetails = (item, index) => {
-    navigation.navigate("TaskDetails", {
-      task: item,
-      index,
-      onUpdate: updateTask,
-    });
-  };
-
-  // Update task from details screen
-  const updateTask = (index, updatedTask) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index] = updatedTask;
-    setTasks(updatedTasks);
-  };
-
   // Render task item
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.taskContainer, { backgroundColor: theme.card, borderColor: theme.border }]}
-      onPress={() => viewTaskDetails(item, index)}
+      onPress={() => viewTaskDetails(item, item.id)}
     >
       <TouchableOpacity
         style={styles.taskTextContainer}
         onPress={(e) => {
           e.stopPropagation();
-          toggleComplete(index);
+          toggleComplete(item.id);
         }}
       >
         <View
@@ -166,7 +134,7 @@ export default function HomeScreen({ navigation, route }) {
         style={[styles.deleteButton, { backgroundColor: theme.danger }]}
         onPress={(e) => {
           e.stopPropagation();
-          handleDeleteTask(index);
+          deleteTask(item.id);
         }}
       >
         <Text style={styles.deleteButtonText}>Delete</Text>
@@ -211,8 +179,8 @@ export default function HomeScreen({ navigation, route }) {
             style={[styles.input, dynamicStyles.input]}
             placeholder="Add a new task..."
             placeholderTextColor={theme.secondaryText}
-            value={task}
-            onChangeText={setTask}
+            value={taskText}
+            onChangeText={setTaskText}
           />
           <TouchableOpacity 
             style={[styles.addButton, dynamicStyles.addButton]} 
@@ -227,7 +195,7 @@ export default function HomeScreen({ navigation, route }) {
           <FlatList
             data={tasks}
             renderItem={renderItem}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={(item) => item.id.toString()}
             style={styles.list}
           />
         ) : (
